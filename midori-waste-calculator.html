@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDORI.so 事業ごみ回収費用計算</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2d6a4f;
+    --green-light: #52b788;
+    --green-pale: #d8f3dc;
+    --green-mid: #40916c;
+    --bg: #f0f7f1;
+    --white: #ffffff;
+    --gray: #6b7280;
+    --dark: #1a2e22;
+    --accent: #1b4332;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 16px 60px;
+  }
+  header { text-align: center; margin-bottom: 28px; }
+  .logo-badge {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  h1 { font-size: 21px; font-weight: 700; color: var(--dark); line-height: 1.4; }
+  h1 span { color: var(--green-mid); }
+  .subtitle { font-size: 13px; color: var(--gray); margin-top: 6px; }
+
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 4px 24px rgba(45,106,79,0.08);
+    margin-bottom: 14px;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--green-mid);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1.5px solid #e5e7eb;
+    background: #fafafa;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    text-align: center;
+  }
+  .tab.active { background: var(--green); color: white; border-color: var(--green); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .item-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .item-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 11px 13px;
+    border-radius: 12px;
+    border: 1.5px solid #e5e7eb;
+    background: #fafafa;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .item-btn:hover { border-color: var(--green-light); background: var(--green-pale); }
+  .item-btn.selected { border-color: var(--green); background: var(--green-pale); }
+  .item-btn .name { font-size: 13px; font-weight: 500; color: var(--dark); line-height: 1.3; }
+  .item-btn .price { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--green-mid); margin-top: 3px; }
+
+  .qty-row { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+  .qty-row label { font-size: 13px; color: var(--gray); font-weight: 500; }
+  .qty-controls {
+    display: flex; align-items: center;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px; overflow: hidden; background: #fafafa;
+  }
+  .qty-btn {
+    width: 38px; height: 38px; border: none; background: transparent;
+    font-size: 20px; color: var(--green-mid); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .qty-btn:hover { background: var(--green-pale); }
+  .qty-display {
+    width: 44px; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500;
+    color: var(--dark); border-left: 1.5px solid #e5e7eb;
+    border-right: 1.5px solid #e5e7eb; line-height: 38px;
+  }
+
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .input-wrap { display: flex; flex-direction: column; gap: 5px; }
+  .input-wrap label { font-size: 12px; color: var(--gray); font-weight: 500; }
+  input[type="number"] {
+    width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px;
+    padding: 10px 10px; font-size: 16px; font-family: 'DM Mono', monospace;
+    color: var(--dark); outline: none; transition: border-color 0.2s; background: #fafafa;
+  }
+  input[type="number"]:focus { border-color: var(--green-light); background: white; }
+
+  .add-btn {
+    width: 100%; max-width: 480px; padding: 14px;
+    background: var(--green); color: white; border: none;
+    border-radius: 14px; font-size: 15px; font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+    transition: background 0.2s, transform 0.1s; margin-bottom: 14px;
+  }
+  .add-btn:hover { background: var(--green-mid); }
+  .add-btn:active { transform: scale(0.98); }
+
+  .items-card {
+    background: var(--white); border-radius: 20px; width: 100%; max-width: 480px;
+    box-shadow: 0 4px 24px rgba(45,106,79,0.08); overflow: hidden; margin-bottom: 14px;
+  }
+  .items-header {
+    padding: 14px 20px 12px; border-bottom: 1px solid #f3f4f6;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .item-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid #f9fafb; gap: 8px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+  .item-info { flex: 1; }
+  .item-info .iname { font-size: 13px; color: var(--dark); font-weight: 500; }
+  .item-info .idims { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--gray); margin-top: 2px; }
+  .item-price { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--green-mid); white-space: nowrap; }
+  .item-delete { background: none; border: none; color: #d1d5db; font-size: 18px; cursor: pointer; padding: 0 0 0 8px; transition: color 0.15s; }
+  .item-delete:hover { color: #ef4444; }
+  .empty-state { padding: 28px 20px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+  .result-card {
+    background: var(--accent); border-radius: 20px; padding: 22px 22px;
+    width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(27,67,50,0.18);
+  }
+  .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+  .result-row .rlabel { font-size: 13px; color: rgba(255,255,255,0.6); }
+  .result-row .rvalue { font-family: 'DM Mono', monospace; font-size: 14px; color: rgba(255,255,255,0.85); }
+  .divider { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 12px 0; }
+  .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; }
+  .total-label { font-size: 13px; color: var(--green-pale); font-weight: 700; letter-spacing: 0.04em; }
+  .total-value { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: #fff; }
+  .total-value .yen { font-size: 16px; margin-right: 2px; opacity: 0.8; }
+
+  .reset-btn {
+    width: 100%; max-width: 480px; margin-top: 10px; padding: 12px;
+    background: transparent; color: var(--gray); border: 1.5px solid #e5e7eb;
+    border-radius: 12px; font-size: 13px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .reset-btn:hover { background: white; color: var(--dark); }
+  .note { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 18px; line-height: 1.8; }
+  .error-msg { font-size: 12px; color: #ef4444; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">MIDORI.so Nagatacho</div>
+  <h1>事業ごみ回収<span>費用計算</span></h1>
+  <p class="subtitle">メンバーシップフィへの上乗せ金額を算出</p>
+</header>
+
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('list')">📋 品目から選ぶ</button>
+    <button class="tab" onclick="switchTab('size')">📐 サイズで計算</button>
+  </div>
+
+  <!-- 品目選択タブ -->
+  <div class="tab-content active" id="tab-list">
+    <div class="section-label">品目を選択</div>
+    <div class="item-grid" id="itemGrid"></div>
+    <div class="qty-row">
+      <label>個数</label>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="changeQty('list', -1)">−</button>
+        <div class="qty-display" id="qtyList">1</div>
+        <button class="qty-btn" onclick="changeQty('list', 1)">＋</button>
+      </div>
+    </div>
+    <p class="error-msg" id="listError">品目を選択してください</p>
+  </div>
+
+  <!-- サイズ入力タブ -->
+  <div class="tab-content" id="tab-size">
+    <div class="section-label">サイズ入力（cm）</div>
+    <div class="input-grid">
+      <div class="input-wrap">
+        <label>縦 cm</label>
+        <input type="number" id="sHeight" placeholder="100" min="1">
+      </div>
+      <div class="input-wrap">
+        <label>横 cm</label>
+        <input type="number" id="sWidth" placeholder="100" min="1">
+      </div>
+      <div class="input-wrap">
+        <label>高さ cm</label>
+        <input type="number" id="sDepth" placeholder="100" min="1">
+      </div>
+    </div>
+    <div class="qty-row">
+      <label>個数</label>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="changeQty('size', -1)">−</button>
+        <div class="qty-display" id="qtySize">1</div>
+        <button class="qty-btn" onclick="changeQty('size', 1)">＋</button>
+      </div>
+    </div>
+    <p class="error-msg" id="sizeError">縦・横・高さをすべて入力してください</p>
+  </div>
+</div>
+
+<button class="add-btn" onclick="addItem()">＋ この品目を追加</button>
+
+<div class="items-card">
+  <div class="items-header">
+    <span class="section-label" style="margin:0">追加した品目</span>
+    <span id="itemCount" style="font-size:12px;color:#9ca3af">0件</span>
+  </div>
+  <div id="itemList">
+    <div class="empty-state">品目がまだありません</div>
+  </div>
+</div>
+
+<div class="result-card">
+  <div class="result-row">
+    <span class="rlabel">回収費用（業者概算）</span>
+    <span class="rvalue" id="rBase">¥0</span>
+  </div>
+  <div class="result-row">
+    <span class="rlabel">手数料（¥500 × <span id="rQtyTotal">0</span>個）</span>
+    <span class="rvalue" id="rHandling">¥0</span>
+  </div>
+  <div class="result-row">
+    <span class="rlabel">小計（税抜）</span>
+    <span class="rvalue" id="rSubtotal">¥0</span>
+  </div>
+  <div class="result-row">
+    <span class="rlabel">消費税（10%）</span>
+    <span class="rvalue" id="rTax">¥0</span>
+  </div>
+  <hr class="divider">
+  <div class="total-row">
+    <span class="total-label">請求合計金額（税込）</span>
+    <span class="total-value"><span class="yen">¥</span><span id="rTotal">0</span></span>
+  </div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">リセット</button>
+
+<p class="note">
+  手数料：¥500／個　消費税：10%<br>
+  サイズ計算の単価：¥18,000／㎥（1㎥ = 100×100×100cm）　最低金額：¥1,000<br>
+  ※品目価格は業者提示の概算です
+</p>
+
+<script>
+  const HANDLING_PER = 500;
+  const RATE = 18000;
+
+  const CATALOG = [
+    { name: '長テーブル',           price: 5500 },
+    { name: '冷蔵庫',               price: 6500 },
+    { name: 'ロールスクリーン',     price: 2500 },
+    { name: 'スーツケース',         price: 2500 },
+    { name: '机',                   price: 5500 },
+    { name: '椅子',                 price: 4500 },
+    { name: 'ラック・キャビネット', price: 6500 },
+    { name: 'プラスチックBOX',     price: 2000 },
+    { name: '植木鉢',               price: 1500 },
+    { name: 'ホワイトボード（大）', price: 10000 },
+    { name: 'ホワイトボード（小）', price: 5000 },
+    { name: '小型家電・モニター等', price: 4000 },
+  ];
+
+  let currentTab = 'list';
+  let selectedItem = null;
+  let qty = { list: 1, size: 1 };
+  let cart = [];
+
+  // 品目グリッド生成
+  const grid = document.getElementById('itemGrid');
+  CATALOG.forEach((item, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'item-btn';
+    btn.dataset.index = i;
+    btn.innerHTML = `<span class="name">${item.name}</span><span class="price">¥${item.price.toLocaleString()}</span>`;
+    btn.onclick = () => selectItem(i);
+    grid.appendChild(btn);
+  });
+
+  function selectItem(index) {
+    selectedItem = index;
+    document.querySelectorAll('.item-btn').forEach((b, i) => {
+      b.classList.toggle('selected', i === index);
+    });
+    document.getElementById('listError').style.display = 'none';
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'list') || (i === 1 && tab === 'size'));
+    });
+    document.getElementById('tab-list').classList.toggle('active', tab === 'list');
+    document.getElementById('tab-size').classList.toggle('active', tab === 'size');
+  }
+
+  function changeQty(tab, delta) {
+    qty[tab] = Math.max(1, qty[tab] + delta);
+    document.getElementById(tab === 'list' ? 'qtyList' : 'qtySize').textContent = qty[tab];
+  }
+
+  function addItem() {
+    if (currentTab === 'list') {
+      if (selectedItem === null) {
+        document.getElementById('listError').style.display = 'block';
+        return;
+      }
+      const item = CATALOG[selectedItem];
+      cart.push({
+        name: item.name,
+        sub: `¥${item.price.toLocaleString()}／個 × ${qty.list}個`,
+        unitCost: item.price,
+        qty: qty.list,
+        totalCost: item.price * qty.list,
+      });
+      selectedItem = null;
+      document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('selected'));
+      qty.list = 1;
+      document.getElementById('qtyList').textContent = '1';
+    } else {
+      const h = parseFloat(document.getElementById('sHeight').value);
+      const w = parseFloat(document.getElementById('sWidth').value);
+      const d = parseFloat(document.getElementById('sDepth').value);
+      if (!h || !w || !d) {
+        document.getElementById('sizeError').style.display = 'block';
+        return;
+      }
+      document.getElementById('sizeError').style.display = 'none';
+      const vol = (h/100) * (w/100) * (d/100);
+      const unitCost = Math.max(1000, Math.ceil(vol * RATE));
+      cart.push({
+        name: 'サイズ指定品目',
+        sub: `${h}×${w}×${d}cm (${vol.toFixed(3)}㎥) × ${qty.size}個`,
+        unitCost,
+        qty: qty.size,
+        totalCost: unitCost * qty.size,
+      });
+      document.getElementById('sHeight').value = '';
+      document.getElementById('sWidth').value = '';
+      document.getElementById('sDepth').value = '';
+      qty.size = 1;
+      document.getElementById('qtySize').textContent = '1';
+    }
+    renderCart();
+    updateTotal();
+  }
+
+  function removeItem(i) {
+    cart.splice(i, 1);
+    renderCart();
+    updateTotal();
+  }
+
+  function renderCart() {
+    const list = document.getElementById('itemList');
+    document.getElementById('itemCount').textContent = cart.length + '件';
+    if (cart.length === 0) {
+      list.innerHTML = '<div class="empty-state">品目がまだありません</div>';
+      return;
+    }
+    list.innerHTML = cart.map((c, i) => `
+      <div class="item-row">
+        <div class="item-info">
+          <div class="iname">${c.name}</div>
+          <div class="idims">${c.sub}</div>
+        </div>
+        <span class="item-price">¥${c.totalCost.toLocaleString()}</span>
+        <button class="item-delete" onclick="removeItem(${i})">×</button>
+      </div>
+    `).join('');
+  }
+
+  function updateTotal() {
+    const totalQty = cart.reduce((s, c) => s + c.qty, 0);
+    const base = cart.reduce((s, c) => s + c.totalCost, 0);
+    const handling = HANDLING_PER * totalQty;
+    const subtotal = base + handling;
+    const tax = Math.ceil(subtotal * 0.1);
+    const total = subtotal + tax;
+
+    document.getElementById('rBase').textContent = '¥' + base.toLocaleString();
+    document.getElementById('rQtyTotal').textContent = totalQty;
+    document.getElementById('rHandling').textContent = '¥' + handling.toLocaleString();
+    document.getElementById('rSubtotal').textContent = '¥' + subtotal.toLocaleString();
+    document.getElementById('rTax').textContent = '¥' + tax.toLocaleString();
+    document.getElementById('rTotal').textContent = total.toLocaleString();
+  }
+
+  function resetAll() {
+    if (cart.length === 0) return;
+    if (confirm('リセットしますか？')) {
+      cart = [];
+      renderCart();
+      updateTotal();
+    }
+  }
+</script>
+</body>
+</html>
