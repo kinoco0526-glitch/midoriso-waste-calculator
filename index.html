@@ -293,7 +293,7 @@
 
 <p class="note">
   手数料：¥500／個　消費税：10%<br>
-  サイズ計算の単価：¥18,000／㎥（1㎥ = 100×100×100cm）　最低金額：¥1,000<br>
+  サイズ計算の単価：¥18,000／㎥（1㎥ = 100×100×100cm）　最低金額：¥1,500<br>
   ※品目価格は業者提示の概算です
 </p>
 
@@ -302,15 +302,15 @@
   const RATE = 18000;
 
   const CATALOG = [
-    { name: '長テーブル',           price: 5500 },
-    { name: '冷蔵庫',               price: 6500 },
-    { name: 'ロールスクリーン',     price: 2500 },
-    { name: 'スーツケース',         price: 2500 },
-    { name: '机',                   price: 5500 },
-    { name: '椅子',                 price: 4500 },
-    { name: 'ラック・キャビネット', price: 6500 },
+    { name: '長テーブル',           price: 5000 },
+    { name: '冷蔵庫',               price: 6000 },
+    { name: 'ロールスクリーン',     price: 2000 },
+    { name: 'スーツケース',         price: 2000 },
+    { name: '机',                   price: 5000 },
+    { name: '椅子',                 price: 4000 },
+    { name: 'ラック・キャビネット', price: 6000 },
     { name: 'プラスチックBOX',     price: 2000 },
-    { name: '植木鉢',               price: 1500 },
+    { name: '植木鉢',               price: 1000 },
     { name: 'ホワイトボード（大）', price: 10000 },
     { name: 'ホワイトボード（小）', price: 5000 },
     { name: '小型家電・モニター等', price: 4000 },
@@ -382,7 +382,7 @@
       }
       document.getElementById('sizeError').style.display = 'none';
       const vol = (h/100) * (w/100) * (d/100);
-      const unitCost = Math.max(1000, Math.ceil(vol * RATE));
+      const unitCost = Math.max(1500, Math.ceil(vol * RATE));
       cart.push({
         name: 'サイズ指定品目',
         sub: `${h}×${w}×${d}cm (${vol.toFixed(3)}㎥) × ${qty.size}個`,
